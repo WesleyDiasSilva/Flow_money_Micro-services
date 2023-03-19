@@ -25,9 +25,13 @@ export class AppController implements OnModuleInit {
   }
 
   @MessagePattern('auth_validation_default')
-  async validationUser(@Payload() message: boolean) {
+  async validationUser(@Payload() message: string) {
     try {
-    } catch {}
+      const token = await this.appService.validationNewUser(message);
+      return token;
+    } catch {
+      return {};
+    }
   }
 
   // @MessagePattern('auth_login_default')

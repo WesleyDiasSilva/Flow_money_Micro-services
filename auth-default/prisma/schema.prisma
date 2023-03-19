@@ -26,9 +26,13 @@ model User {
 }
 
 model Session {
-  id      Int  @id @default(autoincrement())
-  user_id Int  @unique
-  User    User @relation(fields: [user_id], references: [id])
+  id      Int    @id @default(autoincrement())
+  user_id Int    @unique
+  token   String @unique
+  User    User   @relation(fields: [user_id], references: [id])
+
+  created_at DateTime @default(now())
+  update_at  DateTime @updatedAt
 
   @@map("sessions")
 }
@@ -38,6 +42,9 @@ model Verification {
   code        String
   user_id     Int     @unique
   verificated Boolean
+
+  created_at DateTime @default(now())
+  update_at  DateTime @updatedAt
 
   @@map("verifications")
 }

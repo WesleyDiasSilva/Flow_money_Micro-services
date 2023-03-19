@@ -14,6 +14,17 @@ export class AppRepository {
     });
   }
 
+  async validateEmailUser(id: number) {
+    await this.prisma.user.update({
+      data: {
+        validated_email: true,
+      },
+      where: {
+        id,
+      },
+    });
+  }
+
   async createUser(user: CreateUserDto) {
     const { email, name, password } = user;
     return this.prisma.user.create({
@@ -40,6 +51,40 @@ export class AppRepository {
         code,
         user_id,
         verificated: false,
+      },
+    });
+  }
+
+  async findValidation(code: string) {
+    return await this.prisma.verification.findFirst({
+      where: {
+        code,
+      },
+    });
+  }
+
+  async validate(user_id: number) {
+    await this.prisma.verification.update({
+      where: {
+        user_id,
+      },
+      data: {
+        verificated: true,
+      },
+    });
+  }
+
+  async createSession(token: string, user_id: number) {
+    await this.prisma.session.upsert({
+      create: {
+        token,
+        user_id,
+      },
+      update: {
+        token,
+      },
+      where: {
+        user_id,
       },
     });
   }

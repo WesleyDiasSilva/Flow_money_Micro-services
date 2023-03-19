@@ -2,10 +2,12 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { AppRepository } from './app.repository';
 import { CreateUserDto } from './dtos/create.user.dto';
@@ -42,6 +44,19 @@ export class AppService implements OnModuleInit {
     };
     this.client.emit('notify', messageForVerification);
     return newUser;
+  }
+
+  async validationNewUser(message: string) {
+    const validation = await this.appRepository.findValidation(message);
+    if (!validation || validation.verificated) throw new NotFoundException();
+    await this.appRepository.validate(validation.user_id);
+    await this.appRepository.validateEmailUser(validation.user_id);
+    const token = jwt.sign(
+      { user_id: validation.user_id },
+      process.env.SECRET_JWT,
+    );
+    await this.appRepository.createSession(token, validation.user_id);
+    return token;
   }
 
   // async loginUser() {}
