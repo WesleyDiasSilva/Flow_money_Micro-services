@@ -14,7 +14,7 @@ export class AppService {
         
         Congratulations on your enrollment. To confirm your email and be able to access our platform, click on this link, you will be redirected to your account!
         
-        ${process.env.API_GATEWAY}/validation/${email.additionalInformation}`;
+        ${process.env.API_GATEWAY}auth/validation/${email.additionalInformation}`;
         break;
       case 'RECOVER_PASSWORD':
         message = 'This service is currently not available: password recovery';

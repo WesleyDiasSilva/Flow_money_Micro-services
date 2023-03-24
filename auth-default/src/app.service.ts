@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   OnModuleInit,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt';
@@ -11,6 +12,7 @@ import * as jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { AppRepository } from './app.repository';
 import { CreateUserDto } from './dtos/create.user.dto';
+import { LoginUserDto } from './dtos/login.user.dto';
 import { MessageForSendEmail } from './dtos/send.email.dto';
 
 @Injectable()
@@ -46,18 +48,29 @@ export class AppService implements OnModuleInit {
     return newUser;
   }
 
+  async loginUser({ email, password }: LoginUserDto) {
+    const user = await this.appRepository.findUserByEmail(email);
+    if (!user) throw new NotFoundException();
+    const resultHash = bcrypt.compareSync(password, user.password);
+    if (!resultHash) throw new ConflictException();
+    if (!user.validated_email) throw new UnauthorizedException();
+    const token = this.generateToken(user.id);
+    await this.appRepository.createSession(token, user.id);
+    return token;
+  }
+
+  private generateToken(user_id: number) {
+    const token = jwt.sign({ user_id }, process.env.SECRET_JWT);
+    return token;
+  }
+
   async validationNewUser(message: string) {
     const validation = await this.appRepository.findValidation(message);
     if (!validation || validation.verificated) throw new NotFoundException();
     await this.appRepository.validate(validation.user_id);
     await this.appRepository.validateEmailUser(validation.user_id);
-    const token = jwt.sign(
-      { user_id: validation.user_id },
-      process.env.SECRET_JWT,
-    );
+    const token = this.generateToken(validation.user_id);
     await this.appRepository.createSession(token, validation.user_id);
     return token;
   }
-
-  // async loginUser() {}
 }

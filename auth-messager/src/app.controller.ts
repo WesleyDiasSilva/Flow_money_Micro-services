@@ -1,8 +1,8 @@
 import { Controller, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka, MessagePattern, Payload } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
 import { AppService } from './app.service';
 import { CreateUserDto } from './dtos/create.user.dto';
+import { LoginUserDto } from './dtos/login.user.dto';
 
 @Controller()
 export class AppController implements OnModuleInit {
@@ -16,6 +16,7 @@ export class AppController implements OnModuleInit {
     this.client.subscribeToResponseOf('auth_create_default');
     this.client.subscribeToResponseOf('auth_create_google');
     this.client.subscribeToResponseOf('auth_validation_default');
+    this.client.subscribeToResponseOf('auth_login_default');
     await this.client.connect();
   }
 
@@ -28,10 +29,19 @@ export class AppController implements OnModuleInit {
 
   @MessagePattern('auth_validation')
   async validationNewUser(@Payload() message: string) {
-    const response = firstValueFrom(
-      this.client.send('auth_validation_default', message),
-    );
+    const response = await this.appService.forwardValidation(message);
     this.logger.log(response);
     return response;
+  }
+
+  @MessagePattern('auth_login')
+  async validationLogin(@Payload() message: LoginUserDto) {
+    try {
+      return await this.appService.forwardLogin(message);
+    } catch {
+      return {
+        err: 'Our services are currently undergoing maintenance, please try again later!',
+      };
+    }
   }
 }

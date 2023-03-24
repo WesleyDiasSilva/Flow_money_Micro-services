@@ -2,6 +2,7 @@ import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { CreateUserDto } from './dtos/create.user.dto';
+import { LoginUserDto } from './dtos/login.user.dto';
 import { ValidationParam } from './dtos/validation.dto';
 
 @Controller('auth')
@@ -30,5 +31,19 @@ export class AppController {
       this.client.send('auth_validation', code),
     );
     return result;
+  }
+
+  @Post('login')
+  async loginUser(@Body() loginUser: LoginUserDto) {
+    try {
+      const result = await firstValueFrom(
+        this.client.send('auth_login', loginUser),
+      );
+      return result;
+    } catch {
+      return {
+        err: 'Our services are currently unavailable, please try again later!',
+      };
+    }
   }
 }

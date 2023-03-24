@@ -26,7 +26,6 @@ export class EmailService {
     };
 
     const result = await this.transporter.sendMail(mailOptions);
-    console.log('RESULTADO DO EMAIL: ', result);
     return result;
   }
 }

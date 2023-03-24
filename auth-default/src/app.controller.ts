@@ -2,6 +2,7 @@ import { Controller, Inject, OnModuleInit } from '@nestjs/common';
 import { ClientKafka, MessagePattern, Payload } from '@nestjs/microservices';
 import { AppService } from './app.service';
 import { CreateUserDto } from './dtos/create.user.dto';
+import { LoginUserDto } from './dtos/login.user.dto';
 
 @Controller()
 export class AppController implements OnModuleInit {
@@ -20,7 +21,7 @@ export class AppController implements OnModuleInit {
       const newUser = await this.appService.createUser(message);
       return `You will receive a confirmation email shortly at: ${newUser.email}, remember to check the spam box.`;
     } catch {
-      return 'Invalid email or unable to register on our platform at the moment, please try again later!';
+      return 'Try again later!';
     }
   }
 
@@ -34,9 +35,14 @@ export class AppController implements OnModuleInit {
     }
   }
 
-  // @MessagePattern('auth_login_default')
-  // async loginUser(@Payload() message: KafkaMessage) {
-  //   console.log('Message: ', message);
-  //   return 'Created user default';
-  // }
+  @MessagePattern('auth_login_default')
+  async loginUser(@Payload() message: LoginUserDto) {
+    try {
+      return await this.appService.loginUser(message);
+    } catch (err) {
+      return {
+        error: 'Unable to log in at the moment, please try again later!',
+      };
+    }
+  }
 }
