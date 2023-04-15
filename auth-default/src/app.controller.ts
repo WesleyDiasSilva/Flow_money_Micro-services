@@ -20,7 +20,8 @@ export class AppController implements OnModuleInit {
     try {
       const newUser = await this.appService.createUser(message);
       return `You will receive a confirmation email shortly at: ${newUser.email}, remember to check the spam box.`;
-    } catch {
+    } catch (err) {
+      console.log(err);
       return 'Try again later!';
     }
   }
@@ -30,7 +31,8 @@ export class AppController implements OnModuleInit {
     try {
       const token = await this.appService.validationNewUser(message);
       return token;
-    } catch {
+    } catch (err) {
+      console.log(err);
       return {};
     }
   }
@@ -40,9 +42,19 @@ export class AppController implements OnModuleInit {
     try {
       return await this.appService.loginUser(message);
     } catch (err) {
+      console.log(err);
       return {
         error: 'Unable to log in at the moment, please try again later!',
       };
+    }
+  }
+
+  @MessagePattern('validate_token')
+  async validateToken(@Payload() token: string) {
+    try {
+      return this.appService.validateToken(token);
+    } catch {
+      return 'Token invalid!';
     }
   }
 }

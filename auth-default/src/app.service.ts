@@ -28,6 +28,10 @@ export class AppService implements OnModuleInit {
     await this.client.connect();
   }
 
+  async validateToken(token: string) {
+    return this.validateJWT(token);
+  }
+
   async createUser(createUserDto: CreateUserDto) {
     const emailExists = await this.appRepository.findUserByEmail(
       createUserDto.email,
@@ -56,12 +60,20 @@ export class AppService implements OnModuleInit {
     if (!user.validated_email) throw new UnauthorizedException();
     const token = this.generateToken(user.id);
     await this.appRepository.createSession(token, user.id);
-    return token;
+    return 'Bearer ' + token;
   }
 
   private generateToken(user_id: number) {
     const token = jwt.sign({ user_id }, process.env.SECRET_JWT);
     return token;
+  }
+
+  private validateJWT(token: string) {
+    try {
+      return jwt.verify(token, process.env.SECRET_JWT);
+    } catch {
+      return false;
+    }
   }
 
   async validationNewUser(message: string) {
