@@ -1,5 +1,6 @@
 import { Inject, MiddlewareConsumer, Module } from '@nestjs/common';
 import { ClientKafka, ClientsModule, Transport } from '@nestjs/microservices';
+import { NextFunction, Response } from 'express';
 import { AppController } from './app.controller';
 import { AuthController } from './auth/auth.controller';
 import { AuthMiddleware } from './auth/auth.middleware';
@@ -8,6 +9,7 @@ import { CategoriesTransactionsController } from './categories_transactions/cate
 import { CategoriesTransactionsService } from './categories_transactions/categories_transactions.service';
 import { TransactionsController } from './transactions/transactions.controller';
 import { TransactionsService } from './transactions/transactions.service';
+import { AuthRequest } from './types/auth.request';
 
 @Module({
   imports: [
@@ -41,15 +43,13 @@ import { TransactionsService } from './transactions/transactions.service';
   ],
 })
 export class AppModule {
-  constructor(
-    @Inject('KAFKA_SERVICE') private readonly authService: ClientKafka,
-  ) {}
+  constructor(@Inject('KAFKA_SERVICE') private readonly client: ClientKafka) {}
 
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply((req, res, next) =>
-        new AuthMiddleware(this.authService).use(req, res, next),
+      .apply((req: AuthRequest, res: Response, next: NextFunction) =>
+        new AuthMiddleware(this.client).use(req, res, next),
       )
-      .forRoutes('categories-transactions');
+      .forRoutes('categories-transactions', 'transactions');
   }
 }

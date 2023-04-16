@@ -1,17 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { CreateUserDto } from 'src/dtos/auth/create.user.dto';
 import { LoginUserDto } from 'src/dtos/auth/login.user.dto';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   constructor(@Inject('KAFKA_SERVICE') private readonly client: ClientKafka) {}
 
   async onModuleInit() {
     this.client.subscribeToResponseOf('auth_create_default');
     this.client.subscribeToResponseOf('auth_validation_default');
     this.client.subscribeToResponseOf('auth_login_default');
+    await this.client.connect();
   }
 
   async createUser(createUserDto: CreateUserDto) {
